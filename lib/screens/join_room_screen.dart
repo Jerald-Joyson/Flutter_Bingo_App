@@ -10,12 +10,12 @@ import '../widgets/custom_text.dart';
 import '../widgets/custom_textfield.dart';
 
 class JoinRoomScreen extends StatelessWidget {
+  String playerId = 'player2';
   static String routeName = '/Join-room';
   JoinRoomScreen({super.key});
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _roomIdController = TextEditingController();
 
-  @override
   void dispose() {
     _usernameController.dispose();
     _roomIdController.dispose();
@@ -42,7 +42,11 @@ class JoinRoomScreen extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => OnlineGameScreen(roomId: roomId),
+              builder: (context) => OnlineGameScreen(
+                roomId.toString(),
+                playerId.toString(),
+                username.toString(),
+              ),
             ),
           );
           // Fluttertoast.showToast(

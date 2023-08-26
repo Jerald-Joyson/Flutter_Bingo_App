@@ -1,3 +1,138 @@
+import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
+class OnlineGameScreen extends StatefulWidget {
+  final String roomId;
+  final String playerId;
+  final String username;
+
+  OnlineGameScreen(
+    this.roomId,
+    this.playerId,
+    this.username,
+  );
+
+  @override
+  _OnlineGameScreenState createState() => _OnlineGameScreenState();
+}
+
+class _OnlineGameScreenState extends State<OnlineGameScreen> {
+  final TextEditingController _messageController = TextEditingController();
+  final DatabaseReference _roomRef =
+      FirebaseDatabase.instance.reference().child('rooms');
+
+  bool _isPlayer1 = false;
+  bool _isPlayer2 = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _roomRef.child(widget.roomId).onValue.listen((DatabaseEvent event) {
+      if (event.snapshot.value != null &&
+          event.snapshot.value is Map<String, dynamic>) {
+        final Map<String, dynamic> snapshotValue =
+            event.snapshot.value as Map<String, dynamic>;
+        setState(() {
+          _isPlayer1 = snapshotValue.containsKey('player1');
+          _isPlayer2 = snapshotValue.containsKey('player2');
+        });
+      }
+    });
+  }
+
+  void _sendMessage() {
+    String message = _messageController.text.trim();
+    if (message.isNotEmpty) {
+      String sender = widget.username;
+      String messageType = _isPlayer1 ? 'player1' : 'player2';
+
+      _roomRef.child(widget.roomId).update({
+        'message': '$sender: $message',
+      }).then((_) {
+        Fluttertoast.showToast(
+          msg: 'Message sent!',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+        );
+
+        setState(() {
+          _messageController.clear();
+        });
+      }).catchError((error) {
+        print("Failed to send message: $error");
+      });
+    }
+  }
+
+  void _exitChat() {
+    _roomRef.child(widget.roomId).remove().then((_) {
+      Navigator.of(context).pop(); // Navigate back to the previous screen
+    }).catchError((error) {
+      print("Failed to exit chat: $error");
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    bool isSendButtonEnabled = _isPlayer1 || (_isPlayer2 && _isPlayer1);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Chat Room'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Expanded(
+              child: StreamBuilder(
+                stream: _roomRef.child(widget.roomId).onValue,
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+
+                  String message = (snapshot.data?.snapshot.value
+                          as Map<dynamic, dynamic>?)?['message'] ??
+                      '';
+                  return SingleChildScrollView(
+                    child: Text(message),
+                  );
+                },
+              ),
+            ),
+            TextField(
+              controller: _messageController,
+              decoration: InputDecoration(
+                labelText: 'Message',
+              ),
+            ),
+            SizedBox(height: 16.0),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                ElevatedButton(
+                  onPressed: isSendButtonEnabled ? _sendMessage : null,
+                  child: Text('Send'),
+                ),
+                ElevatedButton(
+                  onPressed: _exitChat,
+                  child: Text('Exit'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+/*
+
 import 'dart:math';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -6,15 +141,18 @@ import '../widgets/custom_appbar.dart';
 import '../widgets/custom_text.dart';
 
 class OnlineGameScreen extends StatefulWidget {
-  final String roomId;
-  const OnlineGameScreen({super.key, required this.roomId});
+  String? roomId;
+  String? playerId;
+  String? playerName;
+  OnlineGameScreen(this.roomId, this.playerId, this.playerName, {super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _OnlineGameScreenState createState() => _OnlineGameScreenState();
 }
 
 class _OnlineGameScreenState extends State<OnlineGameScreen> {
+  late DatabaseReference _roomsRef;
+
   List<int> matrixNumbers = [];
   bool refreshButtonVisible = true;
   bool saveButtonClicked = false;
@@ -22,19 +160,22 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
   String appBarText = " ";
   String save_clear = "Save";
 
-  final DatabaseReference _roomsRef =
-      // ignore: deprecated_member_use
-      FirebaseDatabase.instance.reference().child('rooms').child('');
-
   @override
   void initState() {
     super.initState();
     generateMatrixNumbers();
+    _roomsRef = FirebaseDatabase.instance
+        .reference()
+        .child('rooms')
+        .child('${widget.roomId}')
+        .child('${widget.playerId}');
   }
 
   void sendMessage(String message) {
     if (message != "") {
       _roomsRef.child("message").set(message);
+      int index = findIndexForNumber(message);
+      onBoxClicked(index);
     } else {
       Fluttertoast.showToast(
         msg: 'Please enter a message.',
@@ -42,6 +183,10 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
         gravity: ToastGravity.BOTTOM,
       );
     }
+  }
+
+  int findIndexForNumber(String number) {
+    return matrixNumbers.indexOf(int.parse(number));
   }
 
   void generateMatrixNumbers() {
@@ -69,9 +214,14 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
   void saveMatrix() {
     setState(() {
       refreshButtonVisible = false;
-      saveButtonClicked = true;
       appBarText = "";
       save_clear = "Clear";
+      if (widget.playerId == 'player1') {
+        saveButtonClicked = true;
+      }
+      if (widget.playerId == 'player2') {
+        saveButtonClicked = false;
+      }
     });
     clearClickedBoxIndices();
   }
@@ -269,3 +419,4 @@ class _OnlineGameScreenState extends State<OnlineGameScreen> {
     );
   }
 }
+*/
