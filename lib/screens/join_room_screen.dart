@@ -109,7 +109,11 @@ class JoinRoomScreen extends StatelessWidget {
                 height: size.height * 0.045,
               ),
               CustomButton(
-                onTap: () => _joinRoom(context),
+                onTap: () {
+                  _joinRoom(context);
+                  _roomIdController.clear();
+                  _usernameController.clear();
+                },
                 text: 'Join',
               )
             ],
