@@ -1,5 +1,6 @@
 import 'package:bingo_1/screens/create_room_screen.dart';
 import 'package:bingo_1/screens/join_room_screen.dart';
+import 'package:bingo_1/screens/offline_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import '../screens/home_screen.dart';
@@ -35,12 +36,53 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Bingo',
       theme: ThemeData(
-        primarySwatch: Colors.blueGrey,
+    brightness: Brightness.light,
+    primaryColor: Colors.blueGrey[800],
+    scaffoldBackgroundColor: Colors.grey[100],
+    colorScheme: ColorScheme.fromSwatch().copyWith(
+      secondary: Colors.blueAccent,
+      primary: Colors.blueGrey[800],
+    ),
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.white,
+      foregroundColor: Colors.blueGrey[900],
+      elevation: 2,
+      titleTextStyle: TextStyle(
+        fontWeight: FontWeight.bold,
+        color: Colors.blueGrey[900],
+        fontSize: 22,
       ),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blueAccent,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        textStyle: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+    textTheme: TextTheme(
+      bodyMedium: TextStyle(
+        color: Colors.blueGrey[900],
+        fontSize: 16,
+      ),
+      headlineSmall: TextStyle(
+        color: Colors.blueAccent,
+        fontWeight: FontWeight.bold,
+        fontSize: 28,
+      ),
+    ),
+  ),
       home: HomeScreen(),
       routes: {
         JoinRoomScreen.routeName: (context) => JoinRoomScreen(),
         CreateRoomScreen.routeName: (context) => CreateRoomScreen(),
+        ScreenOffline.routeName: (context) => ScreenOffline(),
       },
     );
   }

@@ -15,12 +15,12 @@ class CreateRoomScreen extends StatelessWidget {
   String playerId = 'player1';
   static String routeName = '/create-room';
 
-  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
   final DatabaseReference _roomsRef =
       FirebaseDatabase.instance.reference().child('rooms');
 
   Future<void> _createRoom(BuildContext context) async {
-    String username = _usernameController.text.trim();
+    String username = _nameController.text.trim();
     if (username.isNotEmpty) {
       // Generate a unique room ID
       String? roomId = _roomsRef.push().key;
@@ -28,8 +28,21 @@ class CreateRoomScreen extends StatelessWidget {
       // Create the room in the database
       try {
         await _roomsRef.child(roomId!).set({
-          'player1': username,
-          'message': '',
+          'player1Name': username,
+          'player2Name': (await FirebaseDatabase.instance
+                      .reference()
+                      .child('rooms')
+                      .child(roomId)
+                      .get())
+                  .value is Map
+              ? (((await FirebaseDatabase.instance
+                          .reference()
+                          .child('rooms')
+                          .child(roomId)
+                          .get())
+                      .value as Map)['player2Name'] ??
+                  '')
+              : '',
         });
 
         _displayRoomId(context, roomId);
@@ -39,25 +52,8 @@ class CreateRoomScreen extends StatelessWidget {
     }
   }
 
-  void moveToNextScreen(
-    BuildContext context,
-    String roomIdName,
-    String username,
-  ) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => OnlineGameScreen(
-          roomIdName,
-          playerId,
-          username,
-        ),
-      ),
-    );
-  }
-
   void _displayRoomId(BuildContext context, String roomIdName) {
-    String username = _usernameController.text.trim();
+    String username = _nameController.text.trim();
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -79,7 +75,13 @@ class CreateRoomScreen extends StatelessWidget {
                     toastLength: Toast.LENGTH_SHORT,
                     gravity: ToastGravity.BOTTOM,
                   );
-                  moveToNextScreen(context, roomIdName, username);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          OnlineGameScreen(roomIdName, 'player1', username),
+                    ),
+                  );
                 },
                 child: Container(
                   decoration: BoxDecoration(
@@ -126,42 +128,49 @@ class CreateRoomScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     return Scaffold(
-      appBar: const CustomAppBar(title: "BINGO GAME"),
-      body: Responsive(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text('Create Room'),
+        centerTitle: true,
+      ),
+      body: Center(
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 20),
+          padding: EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.blueGrey.withOpacity(0.12),
+                blurRadius: 12,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const CustomText(
-                    shadows: [
-                      Shadow(
-                        blurRadius: 40,
-                        color: Colors.black,
-                      )
-                    ],
-                    text: 'Create Room',
-                    fontSize: 70,
-                  ),
-                  SizedBox(height: size.height * 0.08),
-                  CustomTextField(
-                    controller: _usernameController,
-                    hintText: 'Enter Your Nickname',
-                  ),
-                  SizedBox(height: size.height * 0.045),
-                  CustomButton(
-                    onTap: () {
-                      _createRoom(context);
-                      _usernameController.clear();
-                    },
-                    text: 'Create',
-                  ),
-                ],
+              Text(
+                'Create a new Bingo Room',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: 'Your Name',
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  if (_nameController.text.trim().isEmpty) return;
+                  _createRoom(context);
+                },
+                icon: const Icon(Icons.check),
+                label: const Text('Create'),
               ),
             ],
           ),

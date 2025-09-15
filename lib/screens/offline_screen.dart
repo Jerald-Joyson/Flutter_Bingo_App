@@ -6,6 +6,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import '../widgets/custom_text.dart';
 
 class ScreenOffline extends StatefulWidget {
+
+  static String routeName = '/offline-screen';
   @override
   _ScreenOfflineState createState() => _ScreenOfflineState();
 }
@@ -15,8 +17,8 @@ class _ScreenOfflineState extends State<ScreenOffline> {
   bool refreshButtonVisible = true;
   bool saveButtonClicked = false;
   List<int> clickedBoxIndices = [];
-  String appBarText = " ";
-  String save_clear = "Save";
+  String appBarText = "";
+  String saveClearText = "Save";
 
   @override
   void initState() {
@@ -25,10 +27,8 @@ class _ScreenOfflineState extends State<ScreenOffline> {
   }
 
   void generateMatrixNumbers() {
-    var random = Random();
     var numbers = List.generate(25, (index) => index + 1);
     numbers.shuffle();
-
     setState(() {
       matrixNumbers = numbers;
     });
@@ -51,7 +51,7 @@ class _ScreenOfflineState extends State<ScreenOffline> {
       refreshButtonVisible = false;
       saveButtonClicked = true;
       appBarText = "";
-      save_clear = "Clear";
+      saveClearText = "Clear";
     });
     clearClickedBoxIndices();
   }
@@ -60,7 +60,7 @@ class _ScreenOfflineState extends State<ScreenOffline> {
     setState(() {
       refreshButtonVisible = true;
       saveButtonClicked = false;
-      save_clear = "Save";
+      saveClearText = "Save";
     });
   }
 
@@ -68,7 +68,7 @@ class _ScreenOfflineState extends State<ScreenOffline> {
     if (index >= 0 && index < matrixNumbers.length) {
       return matrixNumbers[index];
     } else {
-      return -1; // Return a sentinel value to indicate an invalid index
+      return -1;
     }
   }
 
@@ -136,61 +136,99 @@ class _ScreenOfflineState extends State<ScreenOffline> {
         break;
     }
 
-    if (combinationCount > 0) {
-      setState(() {
-        appBarText = letter;
-      });
-    }
+    setState(() {
+      appBarText = letter;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final double gridSize = size.width < size.height ? size.width * 0.85 : size.height * 0.55;
+
     return Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        title: Text(
+          "Offline Bingo",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.blueGrey[900],
+            fontSize: 22,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 2,
+        centerTitle: true,
+      ),
       body: Center(
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(
-                height: 10,
+              SizedBox(height: 20),
+              AnimatedSwitcher(
+                duration: Duration(milliseconds: 300),
+                child: appBarText.isNotEmpty
+                    ? CustomText(
+                        key: ValueKey(appBarText),
+                        text: appBarText,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blueAccent,
+                        shadows: [
+                          Shadow(
+                            blurRadius: 10,
+                            color: Colors.blueGrey,
+                          )
+                        ],
+                      )
+                    : SizedBox(height: 28),
               ),
-              Center(
-                child: CustomText(
-                  shadows: const [
-                    Shadow(
-                      blurRadius: 40,
-                      color: Colors.black,
-                    )
-                  ],
-                  text: appBarText,
-                  fontSize: 20,
-                ),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
+              SizedBox(height: 20),
               Container(
-                width: size.height * 0.55,
-                height: size.height * 0.55,
+                width: gridSize,
+                height: gridSize,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blueGrey.withOpacity(0.15),
+                      blurRadius: 16,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                ),
                 child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  padding: EdgeInsets.all(16),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 5,
-                    crossAxisSpacing: 2.0,
-                    mainAxisSpacing: 2.0,
+                    crossAxisSpacing: 8.0,
+                    mainAxisSpacing: 8.0,
                   ),
                   itemCount: matrixNumbers.length,
                   itemBuilder: (context, index) {
                     bool isClicked = clickedBoxIndices.contains(index);
                     return GestureDetector(
                       onTap: () => onBoxClicked(index),
-                      child: Container(
-                        margin: EdgeInsets.all(2.0),
-                        color: isClicked ? Colors.black : Colors.blueGrey,
+                      child: AnimatedContainer(
+                        duration: Duration(milliseconds: 200),
+                        decoration: BoxDecoration(
+                          color: isClicked ? Colors.blueAccent : Colors.blueGrey[200],
+                          borderRadius: BorderRadius.circular(12),
+                          border: isClicked
+                              ? Border.all(color: Colors.blueAccent, width: 2)
+                              : Border.all(color: Colors.blueGrey[300]!, width: 1),
+                        ),
                         child: Center(
                           child: Text(
                             matrixNumbers[index].toString(),
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(
+                              color: isClicked ? Colors.white : Colors.blueGrey[900],
+                              fontSize: 22,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
@@ -198,47 +236,71 @@ class _ScreenOfflineState extends State<ScreenOffline> {
                   },
                 ),
               ),
-              SizedBox(
-                height: size.height * 0.07,
-              ),
-              Container(
-                width: size.height * 0.40,
+              SizedBox(height: 32),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     Visibility(
                       visible: refreshButtonVisible,
-                      child: ElevatedButton(
+                      child: ElevatedButton.icon(
                         onPressed: refreshMatrix,
-                        child: Text(
+                        icon: Icon(Icons.refresh, color: Colors.white),
+                        label: Text(
                           'Refresh',
                           style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 19,
-                              fontWeight: FontWeight.bold),
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueGrey,
-                          fixedSize: Size(100, 40),
+                          backgroundColor: Colors.blueGrey[700],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                         ),
                       ),
                     ),
-                    ElevatedButton(
+                    ElevatedButton.icon(
                       onPressed: saveMatrix,
-                      child: Text(
-                        save_clear,
+                      icon: Icon(
+                        saveClearText == "Save" ? Icons.save : Icons.clear,
+                        color: Colors.white,
+                      ),
+                      label: Text(
+                        saveClearText,
                         style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 19,
-                            fontWeight: FontWeight.bold),
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueGrey,
-                          fixedSize: Size(100, 40)),
+                        backgroundColor: Colors.blueAccent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                      ),
                     ),
                   ],
                 ),
               ),
+              SizedBox(height: 24),
+              Text(
+                saveButtonClicked
+                    ? "Tap boxes to mark your Bingo numbers!"
+                    : "Press 'Save' to start marking numbers.",
+                style: TextStyle(
+                  color: Colors.blueGrey[700],
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 24),
             ],
           ),
         ),

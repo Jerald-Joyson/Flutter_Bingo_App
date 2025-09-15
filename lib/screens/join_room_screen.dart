@@ -13,109 +13,140 @@ class JoinRoomScreen extends StatelessWidget {
   String playerId = 'player2';
   static String routeName = '/Join-room';
   JoinRoomScreen({super.key});
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _roomIdController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _roomCodeController = TextEditingController();
 
   void dispose() {
-    _usernameController.dispose();
-    _roomIdController.dispose();
+    _nameController.dispose();
+    _roomCodeController.dispose();
   }
 
-  final DatabaseReference _roomsRef =
-      // ignore: deprecated_member_use
-      FirebaseDatabase.instance.reference().child('rooms');
+  // final DatabaseReference _roomsRef =
+  //     // ignore: deprecated_member_use
+  //     FirebaseDatabase.instance.reference().child('rooms');
 
-  void _joinRoom(BuildContext context) async {
-    String username = _usernameController.text.trim();
-    String roomId = _roomIdController.text.trim();
+  // void _joinRoom(BuildContext context) async {
+  //   String username = _usernameController.text.trim();
+  //   String roomId = _roomIdController.text.trim();
 
-    if (username.isNotEmpty && roomId.isNotEmpty) {
-      try {
-        DatabaseEvent event = await _roomsRef.child(roomId).once();
-        DataSnapshot snapshot = event.snapshot;
+  //   if (username.isNotEmpty && roomId.isNotEmpty) {
+  //     try {
+  //       DatabaseEvent event = await _roomsRef.child(roomId).once();
+  //       DataSnapshot snapshot = event.snapshot;
 
-        if (snapshot.value != null && !snapshot.hasChild("player2")) {
-          await _roomsRef.child(roomId).update({
-            'player2': username,
-          });
-          // ignore: use_build_context_synchronously
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => OnlineGameScreen(
-                roomId.toString(),
-                playerId.toString(),
-                username.toString(),
-              ),
-            ),
-          );
-          // Fluttertoast.showToast(
-          //   msg: 'Joined room $roomId as player 2',
-          //   toastLength: Toast.LENGTH_LONG,
-          //   gravity: ToastGravity.BOTTOM,
-          // );
-        } else {
-          Fluttertoast.showToast(
-            msg: 'Room is full or does not exist',
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.BOTTOM,
-          );
-        }
-      } catch (error) {
-        print("Failed to join room: $error");
-      }
-    }
-  }
+  //       if (snapshot.value != null && !snapshot.hasChild("player2")) {
+  //         await _roomsRef.child(roomId).update({
+  //           'player2': username,
+  //         });
+  //         // ignore: use_build_context_synchronously
+  //         Navigator.push(
+  //           context,
+  //           MaterialPageRoute(
+  //             builder: (context) => OnlineGameScreen(
+  //               roomId.toString(),
+  //               playerId.toString(),
+  //               username.toString(),
+  //             ),
+  //           ),
+  //         );
+  //         // Fluttertoast.showToast(
+  //         //   msg: 'Joined room $roomId as player 2',
+  //         //   toastLength: Toast.LENGTH_LONG,
+  //         //   gravity: ToastGravity.BOTTOM,
+  //         // );
+  //       } else {
+  //         Fluttertoast.showToast(
+  //           msg: 'Room is full or does not exist',
+  //           toastLength: Toast.LENGTH_LONG,
+  //           gravity: ToastGravity.BOTTOM,
+  //         );
+  //       }
+  //     } catch (error) {
+  //       print("Failed to join room: $error");
+  //     }
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     return Scaffold(
-      appBar: const CustomAppBar(title: "BINGO GAME"),
-      body: Responsive(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text('Join Room'),
+        centerTitle: true,
+      ),
+      body: Center(
         child: Container(
-          margin: const EdgeInsets.symmetric(
-            horizontal: 20,
+          padding: EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.blueGrey.withOpacity(0.12),
+                blurRadius: 12,
+                offset: Offset(0, 6),
+              ),
+            ],
           ),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const CustomText(
-                shadows: [
-                  Shadow(
-                    blurRadius: 40,
-                    color: Colors.black,
-                  )
-                ],
-                text: 'Join Room',
-                fontSize: 70,
+              Text(
+                'Join an existing Bingo Room',
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
-              SizedBox(
-                height: size.height * 0.08,
+              SizedBox(height: 16),
+              TextField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: 'Your Name',
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
               ),
-              CustomTextField(
-                controller: _usernameController,
-                hintText: 'Enter Your Nickname',
+              SizedBox(height: 16),
+              TextField(
+                controller: _roomCodeController,
+                decoration: InputDecoration(
+                  labelText: 'Room Code',
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
               ),
-              const SizedBox(
-                height: 20,
-              ),
-              CustomTextField(
-                controller: _roomIdController,
-                hintText: 'Enter Game ID',
-              ),
-              SizedBox(
-                height: size.height * 0.045,
-              ),
-              CustomButton(
-                onTap: () {
-                  _joinRoom(context);
-                  _roomIdController.clear();
-                  _usernameController.clear();
+              SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final name = _nameController.text.trim();
+                  final roomId = _roomCodeController.text.trim();
+                  if (name.isEmpty || roomId.isEmpty) return;
+
+                  final roomRef = FirebaseDatabase.instance
+                      .reference()
+                      .child('rooms')
+                      .child(roomId);
+                  final snap = await roomRef.get();
+                  if (!snap.exists) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Room not found')),
+                    );
+                    return;
+                  }
+
+                  await roomRef.update({'player2Name': name});
+
+                  // Navigate to OnlineGameScreen as player2
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => OnlineGameScreen(roomId, 'player2', name),
+                    ),
+                  );
                 },
-                text: 'Join',
-              )
+                icon: const Icon(Icons.login),
+                label: const Text('Join'),
+              ),
             ],
           ),
         ),
